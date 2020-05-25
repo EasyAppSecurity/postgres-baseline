@@ -100,12 +100,12 @@ control 'postgres-01' do
   when 'redhat', 'centos', 'oracle', 'fedora'
     case os[:release]
     when /6\./
-      describe command('/etc/init.d/postgresql-9.4 status') do
+      describe command('/etc/init.d/postgresql-11 status') do
         its('stdout') { should include 'running' }
       end
     when /7\./
-      describe command('ps aux | awk /\'bin\/postgres\'/ | wc -l') do
-        its('stdout') { should include '1' }
+      describe command('ps aux | grep ^postgres') do
+        its('stdout') { should_not be_empty }
       end
     end
   end
@@ -115,9 +115,7 @@ control 'postgres-02' do
   impact 1.0
   title 'Use stable postgresql version'
   desc 'Use only community or commercially supported version of the PostgreSQL software. Do not use RC, DEVEL oder BETA versions in a production environment.'
-  describe command('psql -V') do
-    its('stdout') { should match(/^psql\s\(PostgreSQL\)\s(9\.[3-6]|10\.5).*/) }
-  end
+
   describe command('psql -V') do
     its('stdout') { should_not match(/RC/) }
     its('stdout') { should_not match(/DEVEL/) }
