@@ -302,3 +302,12 @@ control 'postgres-15' do
     its('log_line_prefix') { should eq '%t %u %d %h' }
   end
 end
+
+control 'postgres-cis-bench-316' do
+  impact 1.0
+  title 'Ensure the log file permissions are set correctly'
+  desc 'Log	files often	contain	sensitive data. Allowing unnecessary access	to log files may inadvertently expose sensitive	data to	unauthorized personnel.'
+  describe postgres_session(USER, PASSWORD).query('show log_file_mode;') do
+    its('output') { should eq '0600' }
+  end
+end
