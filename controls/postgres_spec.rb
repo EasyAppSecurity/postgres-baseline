@@ -354,3 +354,29 @@ control 'postgres-cis-bench-45' do
     its('output') { should_not eq '0' }
   end
 end
+
+control 'postgres-cis-bench-47' do
+  impact 0.5
+  title 'Ensure the set_user extension is installed'
+  desc 'Even when reducing and limiting the access to the superuser role as described earlier in this benchmark, it is still difficult to determine who accessed the superuser role and what actions were taken using that role. As such, it is ideal to prevent anyone from logging in as the superuser and forcing them to escalate their role. This model is used at the OS level by the use of sudo and should be emulated in the database. The set_user extension allows for this setup.'
+  describe postgres_session(USER, PASSWORD).query('select count(*) from pg_available_extensions where name=\'set_user\';') do
+    its('output') { should_not eq '0' }
+  end
+end
+
+control 'postgres-cis-bench-48' do
+  impact 0.5
+  title 'Make use of default roles'
+  desc 'In keeping with the principle of least privilege, judicious use of the PostgreSQL default roles can greatly limit the access to privileged, or superuser, access.'
+  
+  supers_except_user_audit_query = 'select count(*) from pg_roles where rolsuper is true and rolname <> \'' + USER + '\''
+  describe postgres_session(USER, PASSWORD).query(supers_except_user_audit_query) do
+    its('output') { should eq '0' }
+  end
+  
+  appuser_super_audit_query = 'select count(*) from pg_roles where rolsuper is true and rolname = \'' + APP_USER + '\''
+  describe postgres_session(USER, PASSWORD).query(appuser_super_audit_query) do
+    its('output') { should eq '0' }
+  end
+  
+end
