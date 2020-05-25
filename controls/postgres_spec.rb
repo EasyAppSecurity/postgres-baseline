@@ -345,3 +345,12 @@ control 'postgres-cis-bench-43' do
     its('output') { should be_empty }
   end
 end
+
+control 'postgres-cis-bench-45' do
+  impact 0.5
+  title 'Use pg_permission extension to audit object permissions'
+  desc 'Auditing permissions in a PostgreSQL database can be intimidating given the default manner in which permissions are presented. The pg_permissions extension greatly simplifies this presentation and allows the user to declare what permissions should exist and then report on differences from that ideal'
+  describe postgres_session(USER, PASSWORD).query('select count(*) from pg_available_extensions where name=\'pg_permission\';') do
+    its('output') { should_not eq '0' }
+  end
+end
