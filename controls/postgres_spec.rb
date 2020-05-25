@@ -35,6 +35,12 @@ PASSWORD = attribute(
   default: 'iloverandompasswordsbutthiswilldo'
 )
 
+APP_USER = attribute(
+  'appuser',
+  description: 'define the application user to access the database',
+  default: 'appuser'
+)
+
 POSTGRES_DATA = attribute(
   'postgres_data',
   description: 'define the postgresql data directory',
@@ -318,5 +324,15 @@ control 'postgres-cis-bench-32' do
   desc 'Basic statement logging can be provided by the standard logging facility with log_statement = all. This is acceptable for monitoring and other uses but does not provide the level of detail generally required for an audit. It is not enough to have a list of all the operations performed against the database, it must also be possible to find particular statements that are of interest to an auditor. The standard logging facility shows what the user requested, while pgAudit focuses on the details of what happened while the database was satisfying the request.'
   describe postgres_session(USER, PASSWORD).query('show shared_preload_libraries;') do
     its('output') { should include 'pgaudit' }
+  end
+end
+
+control 'postgres-cis-bench-42' do
+  impact 1.0
+  title 'Ensure excessive administrative privileges are revoked'
+  desc 'By not restricting global administrative commands to superusers only, regular users granted excessive privileges may execute administrative commands with unintended and undesirable results.'
+  audit_command = '\du ' + APP_USER.to_s
+  describe postgres_session(USER, PASSWORD).query(audit_command) do
+    its('output') { should_not include('Superuser').and include('Create role').and include('Create DB').and include('Bypass RLS') }
   end
 end
