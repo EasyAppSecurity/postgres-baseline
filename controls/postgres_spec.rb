@@ -336,3 +336,12 @@ control 'postgres-cis-bench-42' do
     its('output') { should_not include('Superuser').and include('Create role').and include('Create DB').and include('Bypass RLS') }
   end
 end
+
+control 'postgres-cis-bench-43' do
+  impact 1.0
+  title 'Ensure excessive function privileges are revoked'
+  desc 'Functions in PostgreSQL can be created with the SECURITY DEFINER option. When SECURITY DEFINER functions are executed by a user, said function is run with the privileges of the user who created it, not the user who is running it.'
+  describe postgres_session(USER, PASSWORD).query('SELECT nspname, proname, proargtypes, prosecdef, rolname, proconfig FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid JOIN pg_authid a ON a.oid = p.proowner WHERE prosecdef OR NOT proconfig IS NULL;') do
+    its('output') { should be_empty }
+  end
+end
