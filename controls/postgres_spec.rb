@@ -311,3 +311,12 @@ control 'postgres-cis-bench-316' do
     its('output') { should eq '0600' }
   end
 end
+
+control 'postgres-cis-bench-32' do
+  impact 1.0
+  title 'Ensure the PostgreSQL Audit Extension (pgAudit) is enabled'
+  desc 'Basic statement logging can be provided by the standard logging facility with log_statement = all. This is acceptable for monitoring and other uses but does not provide the level of detail generally required for an audit. It is not enough to have a list of all the operations performed against the database, it must also be possible to find particular statements that are of interest to an auditor. The standard logging facility shows what the user requested, while pgAudit focuses on the details of what happened while the database was satisfying the request.'
+  describe postgres_session(USER, PASSWORD).query('show shared_preload_libraries;') do
+    its('output') { should include 'pgaudit' }
+  end
+end
