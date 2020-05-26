@@ -414,15 +414,6 @@ control 'postgres-cis-bench-52' do
     its(:stdout) { should be_empty }
   end
   
-  # depends on the integrity of the client: if the client machine is untrusted or compromised, 
-  # an attacker could run just about any program on port 113 and return any user name he chooses. 
-  # Ident authentication method is therefore only appropriate for closed networks 
-  # where each client machine is under tight control
-  # (host | hostssl | hostnossl) * * * ident
-  search_host_ident = 'egrep -i \'^(?!#\s*)(host|hostssl|hostnossl)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(ident)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
-  describe command(search_host_ident) do
-    its(:stdout) { should be_empty }
-  end
   
   # If you are at all concerned about password "sniffing" attacks then md5 is preferred.
   search_host_nossl_password = 'egrep -i \'^(?!#\s*)(hostnossl)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(password)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
