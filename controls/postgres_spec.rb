@@ -497,10 +497,10 @@ end
 
 control 'postgres-cis-bench-73' do
   impact 1.0
-  title 'Ensure WAL archiving is configured and functional '
+  title 'Ensure WAL archiving is configured and functional'
   desc 'Unless the server has been correctly configured, one runs the risk of sending WALs in an unsecured, unencrypted fashion.'
   describe postgres_conf(POSTGRES_CONF_PATH) do
     its('archive_mode') { should eq 'on' }
-	its('archive_command') { should include('ssh').or include('ssl') }
+	its('archive_command') { should include('ssh').or include('ssl').or include('sftp') }
   end
 end
