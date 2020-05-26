@@ -474,16 +474,12 @@ control 'postgres-cis-bench-62' do
   end
 end
 
-control 'postgres-cis-bench-67' do
-  impact 1.0
-  title 'Ensure FIPS 140-2 OpenSSL Cryptography Is Used'
-  desc 'Install, configure, and use OpenSSL on a platform that has a NIST certified FIPS 140-2 installation of OpenSSL. This provides PostgreSQL instances the ability to generate and validate cryptographic hashes to protect unclassified information requiring confidentiality and cryptographic protection'
+control 'postgres-cis-bench-69' do
+  impact 0.5
+  title 'Ensure the pgcrypto extension is installed and configured correctly'
+  desc 'If data in the database requires encryption and pgcrypto is not available, this is a fail. If disk or filesystem requires encryption, ask the system owner, DBA, and SA to demonstrate the use of disk-level encryption. If this is required and is not found, this is a fail. If controls do not exist or are not enabled, this is also a fail.'
   
-  describe command('cat /proc/sys/crypto/fips_enabled') do
-    its('stdout') { should eq '1') }
-  end
-  
-  describe command('openssl version') do
-    its('stdout') { should include 'fips') }
+  describe postgres_session(USER, PASSWORD).query('select count(*) from pg_available_extensions where name=\'pgcrypto\';') do
+    its('output') { should_not eq '0' }
   end
 end
