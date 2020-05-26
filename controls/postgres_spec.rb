@@ -162,22 +162,14 @@ control 'postgres-06' do
   impact 1.0
   title 'Use salted hash to store postgresql passwords'
   desc 'Store postgresql passwords in salted hash format (e.g. salted MD5).'
-  case postgres.version
-  when /^9/
-    describe postgres_session(USER, PASSWORD).query('SELECT passwd FROM pg_shadow;') do
-      its('output') { should match(/^md5\S*$/) }
-    end
-    describe postgres_conf(POSTGRES_CONF_PATH) do
-      its('password_encryption') { should eq 'on' }
-    end
-  when /^10/
+
     describe postgres_session(USER, PASSWORD).query('SELECT passwd FROM pg_shadow;') do
       its('output') { should match(/^scram-sha-256\S*$/) }
     end
+	
     describe postgres_conf(POSTGRES_CONF_PATH) do
       its('password_encryption') { should eq 'scram-sha-256' }
     end
-  end
 end
 
 control 'postgres-07' do
@@ -268,29 +260,6 @@ control 'postgres-12' do
   desc 'The following categories of SSL Ciphers must not be used: ADH, LOW, EXP and MD5. A very good description for secure postgres installation / configuration can be found at: https://bettercrypto.org'
   describe postgres_conf(POSTGRES_CONF_PATH) do
     its('ssl_ciphers') { should eq 'ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH' }
-  end
-end
-
-control 'postgres-13' do
-  impact 1.0
-  title 'Require MD5 for ALL users, peers in pg_hba.conf'
-  desc 'Require MD5 for ALL users, peers in pg_hba.conf and do not allow untrusted authentication methods.'
-  describe file(POSTGRES_HBA_CONF_FILE) do
-    its('content') { should match(/local\s.*?all\s.*?all\s.*?md5/) }
-    its('content') { should match(%r{host\s.*?all\s.*?all\s.*?127.0.0.1\/32\s.*?md5}) }
-    its('content') { should match(%r{host\s.*?all\s.*?all\s.*?::1\/128\s.*?md5}) }
-    its('content') { should_not match(/.*password/) }
-    its('content') { should_not match(/.*trust/) }
-    its('content') { should_not match(/.*crypt/) }
-  end
-end
-
-control 'postgres-14' do
-  impact 1.0
-  title 'We accept one peer and one ident for now (chef automation)'
-  desc 'We accept one peer and one ident for now (chef automation)'
-  describe command('cat ' + POSTGRES_HBA_CONF_FILE.to_s + ' | egrep \'peer|ident\' | wc -l') do
-    its('stdout') { should match(/^[2|1]/) }
   end
 end
 
