@@ -469,7 +469,7 @@ control 'postgres-cis-bench-62' do
   impact 1.0
   title 'Ensure backend runtime parameters are configured correctly'
   desc 'A denial of service is possible by denying the use of indexes and by slowing down client access to an unreasonable level. Unsanctioned behavior can be introduced by introducing rogue libraries which can then be called in a database session. Logging can be altered and obfuscated inhibiting root cause analysis.'
-  describe command('SELECT name, setting FROM pg_settings WHERE context IN (\'backend\',\'superuser-backend\') ORDER BY 1;') do
-    its('stdout') { should match(/(jit_profiling_support)(\s+)(\|)(\s+)(off)/) }
+  describe postgres_session(USER, PASSWORD).query('SELECT name, setting FROM pg_settings WHERE context IN (\'backend\',\'superuser-backend\') ORDER BY 1;') do
+    its('output') { should match(/(jit_profiling_support)(\s+)(\|)(\s+)(off)/) }
   end
 end
