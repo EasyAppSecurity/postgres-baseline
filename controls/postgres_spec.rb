@@ -483,3 +483,24 @@ control 'postgres-cis-bench-69' do
     its('output') { should_not eq '0' }
   end
 end
+
+control 'postgres-cis-bench-71' do
+  impact 0.5
+  title 'Ensure a replication-only user is created and used for streaming replication'
+  desc 'As it is not necessary to be a superuser to initiate a replication connection, it is proper to create an account specifically for replication. This allows further locking down the uses of the superuser account and follows the general principle of using the least privileges necessary'
+  
+  replication_users_except_superuser_query = 'select count(*) from pg_roles where rolreplication is true and rolname <> \'' + USER + '\''
+  describe postgres_session(USER, PASSWORD).query(replication_users_except_superuser_query) do
+    its('output') { should_not eq '0' }
+  end
+end
+
+control 'postgres-cis-bench-73' do
+  impact 1.0
+  title 'Ensure WAL archiving is configured and functional '
+  desc 'Unless the server has been correctly configured, one runs the risk of sending WALs in an unsecured, unencrypted fashion.'
+  describe postgres_conf(POSTGRES_CONF_PATH) do
+    its('archive_mode') { should eq 'on' }
+	its('archive_command') { should include('ssh').or include('ssl') }
+  end
+end
