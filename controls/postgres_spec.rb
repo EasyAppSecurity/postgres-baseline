@@ -380,3 +380,15 @@ control 'postgres-cis-bench-48' do
   end
   
 end
+
+control 'postgres-cis-bench-51' do
+  impact 1.0
+  title 'Ensure login via "local" UNIX Domain Socket is configured correctly'
+  desc 'Connecting with the psql client, via UNIX DOMAIN SOCKETS, using the peer authentication method is the most secure mechanism available for local connections. Provided a database user account of the same name of the UNIX account has already been defined in the database, even ordinary user accounts can access the cluster in a similarly highly secure manner.'
+  
+  # local * * trust pattern search
+  search_local_trust = 'egrep -i \'^(?!#\s*)(local)(\s+)(\S+)(\s+)(.+)(\s+)(trust)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
+  describe command(search_local_trust) do
+    its(:stdout) { should be_empty }
+  end
+end
