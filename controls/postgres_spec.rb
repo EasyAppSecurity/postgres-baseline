@@ -473,3 +473,17 @@ control 'postgres-cis-bench-62' do
     its('output') { should match(/(jit_profiling_support)(\s+)(\|)(\s+)(off)/) }
   end
 end
+
+control 'postgres-cis-bench-67' do
+  impact 1.0
+  title 'Ensure FIPS 140-2 OpenSSL Cryptography Is Used'
+  desc 'Install, configure, and use OpenSSL on a platform that has a NIST certified FIPS 140-2 installation of OpenSSL. This provides PostgreSQL instances the ability to generate and validate cryptographic hashes to protect unclassified information requiring confidentiality and cryptographic protection'
+  
+  describe command('cat /proc/sys/crypto/fips_enabled') do
+    its('stdout') { should eq '1') }
+  end
+  
+  describe command('openssl version') do
+    its('stdout') { should include 'fips') }
+  end
+end
