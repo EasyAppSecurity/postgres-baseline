@@ -1,24 +1,50 @@
-# DevSec PostgreSQL Baseline
-
-This Compliance Profile ensures, that all hardening projects keep the same quality.
-
-- https://github.com/dev-sec/chef-postgres-hardening
-- https://github.com/dev-sec/puppet-postgres-hardening
-
 ## Standalone Usage
 
-This Compliance Profile requires [InSpec](https://github.com/chef/inspec) for execution:
+1. Install [InSpec](https://github.com/chef/inspec) for the profile execution
+
+2. Clone the repository
+```
+$ git clone https://github.com/rusakovichma/postgres-baseline
 
 ```
-$ git clone https://github.com/dev-sec/postgres-baseline
-$ inspec exec postgres-baseline
+3. Create properties .yml file in postgre-baseline/attributes flder, where specify postgre installation settings, for example, centos7-test-attributes.yml:
 ```
+user : postgres  <-- postgre superuser name
+appuser : appuser  <-- application user account name
+postgres_data : /var/lib/pgsql/data  <-- pg data directory path
+postgres_conf_dir : /var/lib/pgsql/data   <-- pg configuration directory path
+postgres_conf_path : /var/lib/pgsql/data/postgresql.conf   <-- postgresql.conf file path
 
-You can also execute the profile directly from Github:
+```
+4. Execute the profile:
+ -- (Recommended) Obtaining the superuser password from [HashiCorp Vault](https://www.vaultproject.io/):
+    --- Install [InSpec Vault](https://github.com/inspec/inspec-vault) plugin:
+```
+$ inspec plugin install inspec-vault
 
+```    
+   --- Ensure two environment variables are set for the plugin:
 ```
-$ inspec exec https://github.com/dev-sec/postgres-baseline
+VAULT_TOKEN – set to your authentication token. Contact your Vault administrator for instructions.
+VAULT_ADDR – set to the URL of your vault server, including the port.
 ```
+   --- Put PG superuser password in Vault profile space:
+```
+$ vault kv put secret/inspec/postgres-baseline user_password=pg_superuser_pass
+
+``` 
+   --- Run the profile:
+```
+$ inspec exec postgres-baseline --input-file postgres-baseline/attributes/centos7-test-attributes.yml --reporter html:/tmp/pg-inspec-baseline.html
+
+``` 
+ -- Specifying the superuser password directy:
+```
+$ inspec exec postgres-baseline --input user_password='superuser_pass' --input-file postgres-baseline/attributes/centos7-test-attributes.yml --reporter html:/tmp/pg-inspec-baseline.html
+
+``` 
+5. Report of the baseline assessment will be at /tmp/pg-inspec-baseline.html 
+
 
 ## License and Author
 
