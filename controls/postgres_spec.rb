@@ -29,12 +29,6 @@ USER = attribute(
   default: 'postgres'
 )
 
-PASSWORD = attribute(
-  'password',
-  description: 'define the postgresql password to access the database',
-  default: ''
-)
-
 APP_USER = attribute(
   'appuser',
   description: 'define the application user to access the database',
@@ -64,6 +58,8 @@ POSTGRES_HBA_CONF_FILE = attribute(
   description: 'define path for the postgresql configuration file',
   default: File.join(postgres.conf_dir.to_s, 'pg_hba.conf')
 )
+
+USER_PASSWORD_PARAM = 'user_password'
 
 only_if do
   command('psql').exist?
@@ -144,7 +140,7 @@ control 'postgres-04' do
   impact 1.0
   title 'Only "c" and "internal" should be used as non-trusted procedural languages'
   desc 'If additional programming languages (e.g. plperl) are installed with non-trust mode, then it is possible to gain OS-level access permissions.'
-  describe postgres_session(USER, PASSWORD).query('SELECT count (*) FROM pg_language WHERE lanpltrusted = \'f\' AND lanname!=\'internal\' AND lanname!=\'c\';') do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query('SELECT count (*) FROM pg_language WHERE lanpltrusted = \'f\' AND lanname!=\'internal\' AND lanname!=\'c\';') do
     its('output') { should eq '0' }
   end
 end
@@ -153,7 +149,7 @@ control 'postgres-05' do
   impact 1.0
   title 'Set a password for each user'
   desc 'It tests for usernames which does not set a password.'
-  describe postgres_session(USER, PASSWORD).query('SELECT count(*) FROM pg_shadow WHERE passwd IS NULL;') do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query('SELECT count(*) FROM pg_shadow WHERE passwd IS NULL;') do
     its('output') { should eq '0' }
   end
 end
@@ -163,7 +159,7 @@ control 'postgres-06' do
   title 'Use salted hash to store postgresql passwords'
   desc 'Store postgresql passwords in salted hash format (e.g. salted MD5).'
 
-    describe postgres_session(USER, PASSWORD).query('SELECT passwd FROM pg_shadow;') do
+    describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query('SELECT passwd FROM pg_shadow;') do
       its('output') { should match(/^scram-sha-256\S*$/) }
     end
 	
@@ -176,7 +172,7 @@ control 'postgres-07' do
   impact 1.0
   title 'Only the postgresql database administrator should have SUPERUSER, CREATEDB or CREATEROLE privileges.'
   desc 'Granting extensive privileges to ordinary users can cause various security problems, such as: intentional/ unintentional access, modification or destroying data'
-  describe postgres_session(USER, PASSWORD).query('SELECT count(*) FROM pg_roles WHERE rolsuper IS TRUE OR rolcreaterole IS TRUE or rolcreatedb IS TRUE;') do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query('SELECT count(*) FROM pg_roles WHERE rolsuper IS TRUE OR rolcreaterole IS TRUE or rolcreatedb IS TRUE;') do
     its('output') { should eq '1' }
   end
 end
@@ -185,7 +181,7 @@ control 'postgres-08' do
   impact 1.0
   title 'Only the DBA should have privileges on pg_catalog.pg_authid table.'
   desc 'In pg_catalog.pg_authid table there are stored credentials such as username and password. If hacker has access to the table, then he can extract these credentials.'
-  describe postgres_session(USER, PASSWORD).query('\dp pg_catalog.pg_authid') do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query('\dp pg_catalog.pg_authid') do
     its('output') { should include('pg_catalog').and include('pg_authid').and include('postgres=arwdDxt/postgres') }
   end
 end
@@ -282,7 +278,7 @@ control 'postgres-cis-bench-316' do
   impact 1.0
   title 'Ensure the log file permissions are set correctly'
   desc 'Log	files often	contain	sensitive data. Allowing unnecessary access	to log files may inadvertently expose sensitive	data to	unauthorized personnel.'
-  describe postgres_session(USER, PASSWORD).query('show log_file_mode;') do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query('show log_file_mode;') do
     its('output') { should eq '0600' }
   end
 end
@@ -291,7 +287,7 @@ control 'postgres-cis-bench-32' do
   impact 1.0
   title 'Ensure the PostgreSQL Audit Extension (pgAudit) is enabled'
   desc 'Basic statement logging can be provided by the standard logging facility with log_statement = all. This is acceptable for monitoring and other uses but does not provide the level of detail generally required for an audit. It is not enough to have a list of all the operations performed against the database, it must also be possible to find particular statements that are of interest to an auditor. The standard logging facility shows what the user requested, while pgAudit focuses on the details of what happened while the database was satisfying the request.'
-  describe postgres_session(USER, PASSWORD).query('show shared_preload_libraries;') do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query('show shared_preload_libraries;') do
     its('output') { should include 'pgaudit' }
   end
 end
@@ -301,7 +297,7 @@ control 'postgres-cis-bench-42' do
   title 'Ensure excessive administrative privileges are revoked'
   desc 'By not restricting global administrative commands to superusers only, regular users granted excessive privileges may execute administrative commands with unintended and undesirable results.'
   audit_command = '\du ' + APP_USER.to_s
-  describe postgres_session(USER, PASSWORD).query(audit_command) do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query(audit_command) do
     its('output') { should_not include('Superuser').and include('Create role').and include('Create DB').and include('Bypass RLS') }
   end
 end
@@ -310,7 +306,7 @@ control 'postgres-cis-bench-43' do
   impact 1.0
   title 'Ensure excessive function privileges are revoked'
   desc 'Functions in PostgreSQL can be created with the SECURITY DEFINER option. When SECURITY DEFINER functions are executed by a user, said function is run with the privileges of the user who created it, not the user who is running it.'
-  describe postgres_session(USER, PASSWORD).query('SELECT nspname, proname, proargtypes, prosecdef, rolname, proconfig FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid JOIN pg_authid a ON a.oid = p.proowner WHERE prosecdef OR NOT proconfig IS NULL;') do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query('SELECT nspname, proname, proargtypes, prosecdef, rolname, proconfig FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid JOIN pg_authid a ON a.oid = p.proowner WHERE prosecdef OR NOT proconfig IS NULL;') do
     its('output') { should be_empty }
   end
 end
@@ -319,7 +315,7 @@ control 'postgres-cis-bench-45' do
   impact 0.5
   title 'Use pg_permission extension to audit object permissions'
   desc 'Auditing permissions in a PostgreSQL database can be intimidating given the default manner in which permissions are presented. The pg_permissions extension greatly simplifies this presentation and allows the user to declare what permissions should exist and then report on differences from that ideal'
-  describe postgres_session(USER, PASSWORD).query('select count(*) from pg_available_extensions where name=\'pg_permission\';') do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query('select count(*) from pg_available_extensions where name=\'pg_permission\';') do
     its('output') { should_not eq '0' }
   end
 end
@@ -328,7 +324,7 @@ control 'postgres-cis-bench-47' do
   impact 0.5
   title 'Ensure the set_user extension is installed'
   desc 'Even when reducing and limiting the access to the superuser role as described earlier in this benchmark, it is still difficult to determine who accessed the superuser role and what actions were taken using that role. As such, it is ideal to prevent anyone from logging in as the superuser and forcing them to escalate their role. This model is used at the OS level by the use of sudo and should be emulated in the database. The set_user extension allows for this setup.'
-  describe postgres_session(USER, PASSWORD).query('select count(*) from pg_available_extensions where name=\'set_user\';') do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query('select count(*) from pg_available_extensions where name=\'set_user\';') do
     its('output') { should_not eq '0' }
   end
 end
@@ -339,12 +335,12 @@ control 'postgres-cis-bench-48' do
   desc 'In keeping with the principle of least privilege, judicious use of the PostgreSQL default roles can greatly limit the access to privileged, or superuser, access.'
   
   supers_except_user_audit_query = 'select count(*) from pg_roles where rolsuper is true and rolname <> \'' + USER + '\''
-  describe postgres_session(USER, PASSWORD).query(supers_except_user_audit_query) do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query(supers_except_user_audit_query) do
     its('output') { should eq '0' }
   end
   
   appuser_super_audit_query = 'select count(*) from pg_roles where rolsuper is true and rolname = \'' + APP_USER + '\''
-  describe postgres_session(USER, PASSWORD).query(appuser_super_audit_query) do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query(appuser_super_audit_query) do
     its('output') { should eq '0' }
   end
   
@@ -445,7 +441,7 @@ control 'postgres-cis-bench-62' do
   impact 1.0
   title 'Ensure backend runtime parameters are configured correctly'
   desc 'A denial of service is possible by denying the use of indexes and by slowing down client access to an unreasonable level. Unsanctioned behavior can be introduced by introducing rogue libraries which can then be called in a database session. Logging can be altered and obfuscated inhibiting root cause analysis.'
-  describe postgres_session(USER, PASSWORD).query('SELECT name, setting FROM pg_settings WHERE context IN (\'backend\',\'superuser-backend\') ORDER BY 1;') do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query('SELECT name, setting FROM pg_settings WHERE context IN (\'backend\',\'superuser-backend\') ORDER BY 1;') do
     its('output') { should match(/(ignore_system_indexes)(\s*)(\|)(\s*)(off)/) }
   end
 end
@@ -455,7 +451,7 @@ control 'postgres-cis-bench-69' do
   title 'Ensure the pgcrypto extension is installed and configured correctly'
   desc 'If data in the database requires encryption and pgcrypto is not available, this is a fail. If disk or filesystem requires encryption, ask the system owner, DBA, and SA to demonstrate the use of disk-level encryption. If this is required and is not found, this is a fail. If controls do not exist or are not enabled, this is also a fail.'
   
-  describe postgres_session(USER, PASSWORD).query('select count(*) from pg_available_extensions where name=\'pgcrypto\';') do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query('select count(*) from pg_available_extensions where name=\'pgcrypto\';') do
     its('output') { should_not eq '0' }
   end
 end
@@ -466,7 +462,7 @@ control 'postgres-cis-bench-71' do
   desc 'As it is not necessary to be a superuser to initiate a replication connection, it is proper to create an account specifically for replication. This allows further locking down the uses of the superuser account and follows the general principle of using the least privileges necessary'
   
   replication_users_except_superuser_query = 'select count(*) from pg_roles where rolreplication is true and rolname <> \'' + USER + '\''
-  describe postgres_session(USER, PASSWORD).query(replication_users_except_superuser_query) do
+  describe postgres_session(USER, input(USER_PASSWORD_PARAM)).query(replication_users_except_superuser_query) do
     its('output') { should_not eq '0' }
   end
 end
