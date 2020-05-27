@@ -356,7 +356,7 @@ control 'postgres-cis-bench-51' do
   desc 'Connecting with the psql client, via UNIX DOMAIN SOCKETS, using the peer authentication method is the most secure mechanism available for local connections. Provided a database user account of the same name of the UNIX account has already been defined in the database, even ordinary user accounts can access the cluster in a similarly highly secure manner.'
   
   # local * * trust
-  search_local_trust = 'egrep -i \'^(?!#\s*)(local)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(trust)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
+  search_local_trust = 'egrep -E \'^(\s*)(local)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(trust)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
   describe command(search_local_trust) do
     its(:stdout) { should be_empty }
   end
@@ -368,7 +368,7 @@ control 'postgres-cis-bench-52' do
   desc 'Methods trust, password, and ident are not to be used for remote logins. Method md5 is the most popular and can be used in both encrypted and unencrypted sessions,however, it is vulnerable to packet replay attacks. It is recommended that scram-sha-256 be used instead of md5.'
   
   # (host | hostssl | hostnossl) * * * trust
-  search_host_trust = 'egrep -i \'^(?!#\s*)(host|hostssl|hostnossl)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(trust)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
+  search_host_trust = 'egrep -E \'^(\s*)(host|hostssl|hostnossl)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(trust)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
   describe command(search_host_trust) do
     its(:stdout) { should be_empty }
   end
@@ -378,20 +378,20 @@ control 'postgres-cis-bench-52' do
   # Ident authentication method is therefore only appropriate for closed networks 
   # where each client machine is under tight control
   # (host | hostssl | hostnossl) * * * ident
-  search_host_ident = 'egrep -i \'^(?!#\s*)(host|hostssl|hostnossl)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(ident)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
+  search_host_ident = 'egrep -E \'^(\s*)(host|hostssl|hostnossl)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(ident)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
   describe command(search_host_ident) do
     its(:stdout) { should be_empty }
   end
   
   
   # If you are at all concerned about password "sniffing" attacks then md5 is preferred.
-  search_host_nossl_password = 'egrep -i \'^(?!#\s*)(hostnossl)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(password)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
+  search_host_nossl_password = 'egrep -E \'^(\s*)(hostnossl)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(password)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
   describe command(search_host_nossl_password) do
     its(:stdout) { should be_empty }
   end
   
   # search for password-base auth hostssl auth with ssl disabled
-  search_hostssl_password_without_ssl = 'egrep -i \'^(?!#\s*)(hostssl)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(password)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
+  search_hostssl_password_without_ssl = 'egrep -E \'^(\s*)(hostssl)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(password)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
   command(search_hostssl_password_without_ssl)  do
 
 	describe postgres_conf(POSTGRES_CONF_PATH) do
@@ -402,7 +402,7 @@ control 'postgres-cis-bench-52' do
   
   # Method md5 is the most popular and can be used in both encrypted and unencrypted sessions,however, 
   # it is vulnerable to packet replay attacks. It is recommended that scram-sha-256 be used instead of md5
-  search_host_md5 = 'egrep -i \'^(?!#\s*)(host|hostssl|hostnossl)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(md5)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
+  search_host_md5 = 'egrep -E \'^(\s*)(host|hostssl|hostnossl)(\s+)(\S+)(\s+)(\S+)(\s+)(.+)(\s+)(md5)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
   describe command(search_host_md5) do
     its(:stdout) { should be_empty }
   end
@@ -419,7 +419,7 @@ control 'postgres-16' do
   # hostnossl all         all      0.0.0.0/0    reject 
   # Ensure that no users are able to access the database from 
   # outside your network via a non-SSL connection.  Finally,
-  search_non_ssl_block_default = 'egrep -i \'^(?!#\s*)(hostnossl)(\s+)(all)(\s+)(all)(\s+)(0.0.0.0/0)(\s+)(reject)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
+  search_non_ssl_block_default = 'egrep -E \'^(\s*)(hostnossl)(\s+)(all)(\s+)(all)(\s+)(0.0.0.0/0)(\s+)(reject)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
   describe command(search_non_ssl_block_default) do
     its(:stdout) { should_not be_empty }
   end
@@ -427,14 +427,14 @@ control 'postgres-16' do
   # hostssl   all   postgres   0.0.0.0/0   reject
   # It blocks the user named 'postgres' 
   # from accessing the database from outside the network.
-  search_superuser_block_default = 'egrep -i \'^(?!#\s*)(hostssl)(\s+)(all)(\s+)(' + USER + ')(\s+)(0.0.0.0/0)(\s+)(reject)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
+  search_superuser_block_default = 'egrep -E \'^(\s*)(hostssl)(\s+)(all)(\s+)(' + USER + ')(\s+)(0.0.0.0/0)(\s+)(reject)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
   describe command(search_superuser_block_default) do
     its(:stdout) { should_not be_empty }
   end
   
   # it declares that all other users will have to log in with a password via a secure connection.
   # hostssl   all         all      0.0.0.0/0    scram-sha-256
-  search_users_secure_access_default = 'egrep -i \'^(?!#\s*)(hostssl)(\s+)(all)(\s+)(all)(\s+)(0.0.0.0/0)(\s+)(scram-sha-256)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
+  search_users_secure_access_default = 'egrep -E \'^(\s*)(hostssl)(\s+)(all)(\s+)(all)(\s+)(0.0.0.0/0)(\s+)(scram-sha-256)$\' ' + POSTGRES_HBA_CONF_FILE.to_s
   describe command(search_users_secure_access_default) do
     its(:stdout) { should_not be_empty }
   end
