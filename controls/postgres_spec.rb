@@ -186,7 +186,7 @@ control 'postgres-08' do
   title 'Only the DBA should have privileges on pg_catalog.pg_authid table.'
   desc 'In pg_catalog.pg_authid table there are stored credentials such as username and password. If hacker has access to the table, then he can extract these credentials.'
   describe postgres_session(USER, PASSWORD).query('\dp pg_catalog.pg_authid') do
-    its('output') { should eq 'pg_catalog | pg_authid | table | postgres=arwdDxt/postgres |' }
+    its('output') { should include('pg_catalog').and include('pg_authid').and include('postgres=arwdDxt/postgres') }
   end
 end
 
@@ -446,7 +446,7 @@ control 'postgres-cis-bench-62' do
   title 'Ensure backend runtime parameters are configured correctly'
   desc 'A denial of service is possible by denying the use of indexes and by slowing down client access to an unreasonable level. Unsanctioned behavior can be introduced by introducing rogue libraries which can then be called in a database session. Logging can be altered and obfuscated inhibiting root cause analysis.'
   describe postgres_session(USER, PASSWORD).query('SELECT name, setting FROM pg_settings WHERE context IN (\'backend\',\'superuser-backend\') ORDER BY 1;') do
-    its('output') { should match(/(jit_profiling_support)(\s+)(\|)(\s+)(off)/) }
+    its('output') { should match(/(ignore_system_indexes)(\s+)(\|)(\s+)(off)/) }
   end
 end
 
