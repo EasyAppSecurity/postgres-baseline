@@ -17,7 +17,7 @@ postgres_conf_path : /var/lib/pgsql/data/postgresql.conf   <-- postgresql.conf f
 
 ```
 4. Execute the profile:
- -- (Recommended) Obtaining the superuser password from [HashiCorp Vault](https://www.vaultproject.io/):
+ - (Recommended) Obtaining the superuser password from [HashiCorp Vault](https://www.vaultproject.io/):
     --- Install [InSpec Vault](https://github.com/inspec/inspec-vault) plugin:
 ```
 $ inspec plugin install inspec-vault
@@ -38,7 +38,7 @@ $ vault kv put secret/inspec/postgres-baseline user_password=pg_superuser_pass
 $ inspec exec postgres-baseline --input-file postgres-baseline/attributes/centos7-test-attributes.yml --reporter html:/tmp/pg-inspec-baseline.html
 
 ``` 
- -- Specifying the superuser password directy:
+ - Specifying the superuser password directy:
 ```
 $ inspec exec postgres-baseline --input user_password='superuser_pass' --input-file postgres-baseline/attributes/centos7-test-attributes.yml --reporter html:/tmp/pg-inspec-baseline.html
 
