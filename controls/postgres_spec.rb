@@ -407,6 +407,13 @@ control 'postgres-cis-bench-52' do
     its(:stdout) { should be_empty }
   end
   
+end
+
+control 'postgres-16' do
+  impact 1.0
+  title 'Ensure secure default host access settings are used'
+  desc 'Make sure that host deny-by-default remote access settings are used in the end of pg_hba.conf file'
+  
   # Make sure that your host settings match the following in the end of pg_hba.conf file
   
   # hostnossl all         all      0.0.0.0/0    reject 
