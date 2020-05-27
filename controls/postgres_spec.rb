@@ -32,7 +32,7 @@ USER = attribute(
 PASSWORD = attribute(
   'password',
   description: 'define the postgresql password to access the database',
-  default: 'iloverandompasswordsbutthiswilldo'
+  default: ''
 )
 
 APP_USER = attribute(
@@ -446,7 +446,7 @@ control 'postgres-cis-bench-62' do
   title 'Ensure backend runtime parameters are configured correctly'
   desc 'A denial of service is possible by denying the use of indexes and by slowing down client access to an unreasonable level. Unsanctioned behavior can be introduced by introducing rogue libraries which can then be called in a database session. Logging can be altered and obfuscated inhibiting root cause analysis.'
   describe postgres_session(USER, PASSWORD).query('SELECT name, setting FROM pg_settings WHERE context IN (\'backend\',\'superuser-backend\') ORDER BY 1;') do
-    its('output') { should match(/(ignore_system_indexes)(\s+)(\|)(\s+)(off)/) }
+    its('output') { should match(/(ignore_system_indexes)(\s*)(\|)(\s*)(off)/) }
   end
 end
 
