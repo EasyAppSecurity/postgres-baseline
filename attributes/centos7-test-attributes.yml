@@ -1,0 +1,5 @@
+user : postgres
+appuser : appuser
+postgres_data : /var/lib/pgsql/data
+postgres_conf_dir : /var/lib/pgsql/data
+postgres_conf_path : /var/lib/pgsql/data/postgresql.conf
