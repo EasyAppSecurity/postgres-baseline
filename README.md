@@ -1,3 +1,5 @@
+Postgre installation Security Assessment InSpec profile
+
 ## Standalone Usage
 
 1. Install [InSpec](https://github.com/chef/inspec) for the profile execution
@@ -7,7 +9,8 @@
 $ git clone https://github.com/rusakovichma/postgres-baseline
 
 ```
-3. Create properties .yml file in postgre-baseline/attributes flder, where specify postgre installation settings, for example, centos7-test-attributes.yml:
+3. Create properties .yml file in postgre-baseline/attributes folder, where specify postgre installation settings. 
+For example, centos7-test-attributes.yml:
 ```
 user : postgres  <-- postgre superuser name
 appuser : appuser  <-- application user account name
@@ -17,7 +20,14 @@ postgres_conf_path : /var/lib/pgsql/data/postgresql.conf   <-- postgresql.conf f
 
 ```
 4. Execute the profile:
- - **(Recommended) Obtaining the superuser password from [HashiCorp Vault](https://www.vaultproject.io/)**: 
+ - **Specifying the superuser password directly:**
+	```
+	$ inspec exec postgres-baseline --input user_password='superuser_pass' --input-file postgres-baseline/attributes/centos7-test-attributes.yml --reporter html:/tmp/pg-inspec-baseline.html
+
+	``` 
+	
+	
+ - **(Recommended) Or obtain the superuser password from [HashiCorp Vault](https://www.vaultproject.io/)**: 
     - Install [InSpec Vault](https://github.com/inspec/inspec-vault) plugin:
 	```
 	$ inspec plugin install inspec-vault
@@ -39,12 +49,8 @@ postgres_conf_path : /var/lib/pgsql/data/postgresql.conf   <-- postgresql.conf f
 	$ inspec exec postgres-baseline --input-file postgres-baseline/attributes/centos7-test-attributes.yml --reporter html:/tmp/pg-inspec-baseline.html
 
 	``` 
- - **Specifying the superuser password directly:**
-	```
-	$ inspec exec postgres-baseline --input user_password='superuser_pass' --input-file postgres-baseline/attributes/centos7-test-attributes.yml --reporter html:/tmp/pg-inspec-baseline.html
 
-	``` 
-5. Report of the baseline assessment will be at /tmp/pg-inspec-baseline.html 
+5. Report of the baseline assessment will be at /tmp/pg-inspec-baseline.html
 
 
 ## License and Author
